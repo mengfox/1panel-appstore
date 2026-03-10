@@ -16,7 +16,7 @@ additionalProperties:
               value: mysql
             - label: MariaDB
               value: mariadb
-        - default: rainbow-dnsmgr
+        - default: mtab
           envKey: PANEL_DB_NAME
           labelEn: Database name
           labelZh: 数据库名
@@ -24,16 +24,15 @@ additionalProperties:
           required: true
           rule: paramCommon
           type: text
-        - default: rainbow-dnsmgr
+        - default: mtab
           envKey: PANEL_DB_USER
           labelEn: Database username
           labelZh: 数据库用户
           random: true
           required: true
           rule: paramCommon
-
           type: text
-        - default: rainbow-dnsmgr
+        - default: mtab
           envKey: PANEL_DB_USER_PASSWORD
           labelEn: Database password
           labelZh: 数据库用户密码
@@ -41,7 +40,7 @@ additionalProperties:
           required: true
           rule: paramComplexity
           type: password
-        - default: 10880
+        - default: 18090
           edit: true
           envKey: PANEL_APP_PORT_HTTP
           labelEn: Port
