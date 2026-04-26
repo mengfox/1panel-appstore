@@ -110,25 +110,6 @@ jobs:
             exit 1
           fi
 
-      - name: Check createdBy label
-        run: |
-          set -e
-
-          missing=0
-
-          for compose in $(find apps -type f \( -name "docker-compose.yml" -o -name "docker-compose.yaml" \)); do
-            if ! grep -q "createdBy:[[:space:]]*Apps" "$compose"; then
-              echo "警告：$compose 缺少 labels.createdBy: Apps"
-              missing=1
-            fi
-          done
-
-          if [ "$missing" -eq 1 ]; then
-            echo "建议所有 docker-compose.yml 添加："
-            echo "labels:"
-            echo "  createdBy: Apps"
-          fi
-
       - name: Run tools validation
         run: |
           set -e
@@ -154,11 +135,28 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Check CNB token
+        run: |
+          set -e
+          if [ -z "${{ secrets.CNB_TOKEN }}" ]; then
+            echo "错误：未配置 GitHub Secret：CNB_TOKEN"
+            echo "请到 GitHub 仓库 Settings -> Secrets and variables -> Actions 添加 CNB_TOKEN"
+            exit 1
+          fi
+
       - name: Sync to CNB
-        uses: docker://tencentcom/git-sync
-        env:
-          PLUGIN_TARGET_URL: "https://cnb.cool/mengfox/1panel-appstore"
-          PLUGIN_AUTH_TYPE: "https"
-          PLUGIN_USERNAME: "cnb"
-          PLUGIN_PASSWORD: ${{ secrets.CNB_TOKEN }}
-          PLUGIN_FORCE: "true"
+        run: |
+          set -e
+
+          docker run --rm \
+            -v "${{ github.workspace }}:${{ github.workspace }}" \
+            -w "${{ github.workspace }}" \
+            -e PLUGIN_TARGET_URL="https://cnb.cool/mengfox/1panel-appstore.git" \
+            -e PLUGIN_AUTH_TYPE="https" \
+            -e PLUGIN_USERNAME="cnb" \
+            -e PLUGIN_PASSWORD="${{ secrets.CNB_TOKEN }}" \
+            -e PLUGIN_BRANCH="main" \
+            -e PLUGIN_GIT_USER="mengfox" \
+            -e PLUGIN_GIT_EMAIL="actions@github.com" \
+            -e PLUGIN_FORCE="true" \
+            tencentcom/git-sync
