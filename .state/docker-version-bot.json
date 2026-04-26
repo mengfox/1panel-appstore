@@ -1,1 +1,12 @@
-{}
+{
+  "rainbow-dnsmgr": {
+    "mode": "github_release",
+    "image": "netcccyun/dnsmgr",
+    "version_dir": "2.17",
+    "tag": "2.17",
+    "github_tag": "2.17",
+    "digest": "sha256:815c780af440c84b29074fc33ffea2ba419bc1619715bb6519a406c0137d8336",
+    "commit": "",
+    "updated_at": "2026-04-26T18:47:27Z"
+  }
+}
