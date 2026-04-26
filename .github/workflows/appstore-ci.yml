@@ -108,7 +108,7 @@ jobs:
           if grep -R "image:.*:latest" apps; then
             echo "错误：不允许使用 latest 镜像标签，请使用固定版本号"
             exit 1
-          fi
+          fi 
 
       - name: Run tools validation
         run: |
