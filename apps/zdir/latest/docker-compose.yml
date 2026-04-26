@@ -1,10 +1,7 @@
-version: "3.3"
-
 services:
   zdir:
     image: "helloz/zdir:latest"
     container_name: ${CONTAINER_NAME}
-    privileged: true
     restart: always
     networks:
       - 1panel-network
