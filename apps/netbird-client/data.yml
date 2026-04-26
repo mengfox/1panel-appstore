@@ -1,0 +1,16 @@
+additionalProperties:
+  key: netbird-client
+  name: NetBird Client
+  tags:
+    - Tool
+    - Local
+  description:
+    en: NetBird client container for joining an existing network
+    zh: NetBird 客户端容器
+    zh-Hant: NetBird 用戶端容器
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  website: https://netbird.io/
+  github: https://github.com/netbirdio/netbird
+  document: https://docs.netbird.io/get-started/install/docker
