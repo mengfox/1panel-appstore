@@ -1,0 +1,27 @@
+additionalProperties:
+  formFields:
+    - default: 6379
+      edit: true
+      envKey: PANEL_APP_PORT_REDIS
+      labelZh: Redis 端口
+      labelEn: Redis Port
+      required: true
+      rule: paramPort
+      type: number
+
+    - default: ./data
+      edit: true
+      envKey: REDIS_DATA_PATH
+      labelZh: 数据目录
+      labelEn: Data Path
+      required: true
+      type: text
+
+    - default: changeme
+      edit: true
+      envKey: REDIS_PASSWORD
+      labelZh: Redis 密码
+      labelEn: Redis Password
+      random: true
+      required: true
+      type: password

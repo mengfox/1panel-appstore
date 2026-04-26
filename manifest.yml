@@ -1,0 +1,31 @@
+store:
+  name: MengFox 1Panel AppStore
+  description: 第三方 1Panel 应用商店仓库，GitHub 单主仓库维护，CNB 自动镜像
+  maintainer: MengFox
+  homepage: https://www.mengfox.com
+  version: 1
+
+channels:
+  stable:
+    description: 稳定版应用
+  beta:
+    description: 测试版应用
+  dev:
+    description: 开发版应用
+
+apps:
+  demo-nginx:
+    enabled: true
+    channel: stable
+    owner: mengfox
+    description: Nginx 示例应用
+    allow_registries:
+      - docker.io
+
+  demo-redis:
+    enabled: true
+    channel: stable
+    owner: mengfox
+    description: Redis 示例应用
+    allow_registries:
+      - docker.io

@@ -1,0 +1,164 @@
+name: 1Panel AppStore CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate 1Panel Apps
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check base directories
+        run: |
+          set -e
+
+          if [ ! -d "apps" ]; then
+            echo "错误：apps 目录不存在"
+            exit 1
+          fi
+
+          if [ ! -f "manifest.yml" ]; then
+            echo "警告：manifest.yml 不存在，建议保留"
+          fi
+
+      - name: Validate app directory structure
+        run: |
+          set -e
+
+          for app in apps/*; do
+            [ -d "$app" ] || continue
+
+            app_name="$(basename "$app")"
+            echo "正在检查应用：$app_name"
+
+            if [ ! -f "$app/data.yml" ] && [ ! -f "$app/data.yaml" ]; then
+              echo "错误：$app_name 缺少 data.yml"
+              exit 1
+            fi
+
+            version_count=0
+
+            for ver in "$app"/*; do
+              [ -d "$ver" ] || continue
+
+              ver_name="$(basename "$ver")"
+
+              if [ ! -f "$ver/data.yml" ] && [ ! -f "$ver/data.yaml" ]; then
+                echo "错误：$app_name/$ver_name 缺少 data.yml"
+                exit 1
+              fi
+
+              if [ ! -f "$ver/docker-compose.yml" ] && [ ! -f "$ver/docker-compose.yaml" ]; then
+                echo "错误：$app_name/$ver_name 缺少 docker-compose.yml"
+                exit 1
+              fi
+
+              version_count=$((version_count + 1))
+            done
+
+            if [ "$version_count" -eq 0 ]; then
+              echo "错误：$app_name 没有版本目录"
+              exit 1
+            fi
+          done
+
+      - name: Deny dangerous compose options
+        run: |
+          set -e
+
+          if grep -R "privileged:[[:space:]]*true" apps; then
+            echo "错误：不允许 privileged: true"
+            exit 1
+          fi
+
+          if grep -R "/var/run/docker.sock" apps; then
+            echo "错误：不允许挂载 /var/run/docker.sock"
+            exit 1
+          fi
+
+          if grep -R "pid:[[:space:]]*host" apps; then
+            echo "错误：不允许 pid: host"
+            exit 1
+          fi
+
+          if grep -R "ipc:[[:space:]]*host" apps; then
+            echo "错误：不允许 ipc: host"
+            exit 1
+          fi
+
+          if grep -R "network_mode:[[:space:]]*host" apps; then
+            echo "警告：检测到 network_mode: host，请谨慎使用"
+          fi
+
+      - name: Deny latest image tag
+        run: |
+          set -e
+
+          if grep -R "image:.*:latest" apps; then
+            echo "错误：不允许使用 latest 镜像标签，请使用固定版本号"
+            exit 1
+          fi
+
+      - name: Check createdBy label
+        run: |
+          set -e
+
+          missing=0
+
+          for compose in $(find apps -type f \( -name "docker-compose.yml" -o -name "docker-compose.yaml" \)); do
+            if ! grep -q "createdBy:[[:space:]]*Apps" "$compose"; then
+              echo "警告：$compose 缺少 labels.createdBy: Apps"
+              missing=1
+            fi
+          done
+
+          if [ "$missing" -eq 1 ]; then
+            echo "建议所有 docker-compose.yml 添加："
+            echo "labels:"
+            echo "  createdBy: Apps"
+          fi
+
+      - name: Run tools validation
+        run: |
+          set -e
+
+          if [ -f "tools/validate.sh" ]; then
+            chmod +x tools/validate.sh
+            ./tools/validate.sh
+          else
+            echo "tools/validate.sh 不存在，跳过"
+          fi
+
+  sync-cnb:
+    name: Sync GitHub to CNB
+    runs-on: ubuntu-latest
+    needs:
+      - validate
+
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout full repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sync to CNB
+        uses: docker://tencentcom/git-sync
+        env:
+          PLUGIN_TARGET_URL: "https://cnb.cool/mengfox/1panel-appstore"
+          PLUGIN_AUTH_TYPE: "https"
+          PLUGIN_USERNAME: "cnb"
+          PLUGIN_PASSWORD: ${{ secrets.CNB_TOKEN }}
+          PLUGIN_FORCE: "true"

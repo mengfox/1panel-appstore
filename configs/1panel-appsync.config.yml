@@ -1,0 +1,90 @@
+appsync:
+  name: 1panel-appsync
+  log_level: info
+  log_file: /var/log/1panel-appsync/appsync.log
+  data_dir: /var/lib/1panel-appsync
+  lock_file: /var/run/1panel-appsync.lock
+  backup_keep: 10
+  dry_run: false
+
+onepanel:
+  auto_detect: true
+  local_app_dir: /opt/1panel/resource/apps/local
+
+region:
+  # auto: 自动测速，谁快用谁
+  # cn: 国内模式，优先 CNB
+  # global: 海外模式，优先 GitHub
+  mode: auto
+
+repositories:
+  - name: mengfox-appstore
+    enabled: true
+    branch: main
+    source_dir: apps
+    sync_mode: merge
+
+    # 注意：
+    # 你只维护 GitHub，一个主仓库。
+    # CNB 由 GitHub Actions 自动镜像，不需要手动提交。
+    sources:
+      - name: cnb
+        region: cn
+        priority: 10
+        url: https://cnb.cool/mengfox/1panel-appstore
+
+      - name: github
+        region: global
+        priority: 20
+        url: https://github.com/mengfox/1panel-appstore.git
+
+sync:
+  overwrite_existing: true
+  delete_removed_apps: false
+  backup_before_sync: true
+  validate_before_sync: true
+  clean_temp_after_sync: true
+  skip_if_commit_unchanged: true
+
+dependencies:
+  auto_install: true
+  package_manager: auto
+  commands:
+    - git
+  packages:
+    - ca-certificates
+
+policy:
+  enabled: true
+
+  allow_registries:
+    - docker.io
+    - ghcr.io
+    - registry.cn-hangzhou.aliyuncs.com
+    - registry.cn-shenzhen.aliyuncs.com
+    - registry.cn-beijing.aliyuncs.com
+    - ccr.ccs.tencentyun.com
+    - harbor.example.com
+
+  deny_latest_tag: true
+  deny_privileged: true
+  deny_host_network: false
+  deny_host_pid: true
+  deny_host_ipc: true
+  deny_sensitive_mounts: true
+  require_created_by_label: true
+  require_1panel_network: false
+
+  sensitive_mounts:
+    - /
+    - /etc
+    - /root
+    - /var/run/docker.sock
+    - /var/lib/docker
+    - /proc
+    - /sys
+
+notify:
+  enabled: false
+  type: webhook
+  webhook_url: ""

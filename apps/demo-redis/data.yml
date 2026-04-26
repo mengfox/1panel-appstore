@@ -1,0 +1,18 @@
+name: Demo Redis
+tags:
+  - Database
+title: Demo Redis
+description: Redis 示例应用
+additionalProperties:
+  key: demo-redis
+  name: Demo Redis
+  tags:
+    - Database
+  shortDescZh: Redis 示例应用
+  shortDescEn: Demo Redis App
+  type: runtime
+  crossVersionUpdate: true
+  limit: 0
+  website: https://redis.io
+  github: https://github.com/redis/redis
+  document: https://redis.io/docs/
