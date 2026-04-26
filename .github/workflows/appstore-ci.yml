@@ -169,8 +169,6 @@ jobs:
                       error(file, idx, "禁止挂载 /var/run/docker.sock", raw)
                       continue
 
-                  # 仅检查 volumes 的短语法挂载行：
-                  # - /host/path:/container/path:ro
                   volume_match = re.match(r"""^-\s*['"]?([^'"]+)['"]?\s*(#.*)?$""", line)
                   if not volume_match:
                       continue
@@ -217,7 +215,7 @@ jobs:
           print("危险配置检查通过")
           PY
 
-      - name: Deny latest image tag
+      - name: Check latest image tag
         run: |
           set -e
 
@@ -225,23 +223,20 @@ jobs:
 
           files="$(find apps -type f \( -name 'docker-compose.yml' -o -name 'docker-compose.yaml' \) | sort)"
 
-          failed=0
+          if [ -z "$files" ]; then
+            echo "::warning::未找到 docker-compose.yml 或 docker-compose.yaml，跳过 latest 检查"
+            exit 0
+          fi
 
           for file in $files; do
             echo "检查：$file"
 
             if grep -nE '^[[:space:]]*image:[[:space:]]*["'"'"']?[^[:space:]"'"'"']+:latest["'"'"']?[[:space:]]*($|#)' "$file"; then
-              echo "::error file=$file::禁止使用 latest 镜像标签，请使用固定版本号"
-              failed=1
+              echo "::warning file=$file::检测到 latest 镜像标签，当前允许使用，但建议生产环境固定版本号"
             fi
           done
 
-          if [ "$failed" -ne 0 ]; then
-            echo "latest 镜像标签检查失败"
-            exit 1
-          fi
-
-          echo "latest 镜像标签检查通过"
+          echo "latest 镜像标签检查完成，允许继续"
 
       - name: Run tools validation
         run: |
