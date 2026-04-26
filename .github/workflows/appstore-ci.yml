@@ -24,27 +24,35 @@ jobs:
           set -e
 
           if [ ! -d "apps" ]; then
-            echo "错误：apps 目录不存在"
+            echo "::error::apps 目录不存在"
             exit 1
           fi
 
-          if [ ! -f "manifest.yml" ]; then
-            echo "警告：manifest.yml 不存在，建议保留"
+          if [ ! -f "manifest.yml" ] && [ ! -f "manifest.yaml" ]; then
+            echo "::warning::manifest.yml 不存在，建议保留"
           fi
+
+          echo "基础目录检查通过"
 
       - name: Validate app directory structure
         run: |
           set -e
 
+          failed=0
+          app_count=0
+
           for app in apps/*; do
             [ -d "$app" ] || continue
 
+            app_count=$((app_count + 1))
             app_name="$(basename "$app")"
+
             echo "正在检查应用：$app_name"
 
             if [ ! -f "$app/data.yml" ] && [ ! -f "$app/data.yaml" ]; then
-              echo "错误：$app_name 缺少 data.yml"
-              exit 1
+              echo "::error file=$app::应用 $app_name 缺少 data.yml 或 data.yaml"
+              failed=1
+              continue
             fi
 
             version_count=0
@@ -54,61 +62,124 @@ jobs:
 
               ver_name="$(basename "$ver")"
 
+              # 跳过隐藏目录
+              case "$ver_name" in
+                .* )
+                  continue
+                  ;;
+              esac
+
+              version_count=$((version_count + 1))
+
               if [ ! -f "$ver/data.yml" ] && [ ! -f "$ver/data.yaml" ]; then
-                echo "错误：$app_name/$ver_name 缺少 data.yml"
-                exit 1
+                echo "::error file=$ver::版本 $app_name/$ver_name 缺少 data.yml 或 data.yaml"
+                failed=1
               fi
 
               if [ ! -f "$ver/docker-compose.yml" ] && [ ! -f "$ver/docker-compose.yaml" ]; then
-                echo "错误：$app_name/$ver_name 缺少 docker-compose.yml"
-                exit 1
+                echo "::error file=$ver::版本 $app_name/$ver_name 缺少 docker-compose.yml 或 docker-compose.yaml"
+                failed=1
               fi
-
-              version_count=$((version_count + 1))
             done
 
             if [ "$version_count" -eq 0 ]; then
-              echo "错误：$app_name 没有版本目录"
-              exit 1
+              echo "::error file=$app::应用 $app_name 没有版本目录"
+              failed=1
             fi
           done
+
+          if [ "$app_count" -eq 0 ]; then
+            echo "::error::apps 目录下没有任何应用"
+            failed=1
+          fi
+
+          if [ "$failed" -ne 0 ]; then
+            echo "应用目录结构校验失败"
+            exit 1
+          fi
+
+          echo "应用目录结构校验通过"
 
       - name: Deny dangerous compose options
         run: |
           set -e
 
-          if grep -R "privileged:[[:space:]]*true" apps; then
-            echo "错误：不允许 privileged: true"
+          echo "检查 docker-compose.yml 是否包含危险配置..."
+
+          files="$(find apps -type f \( -name 'docker-compose.yml' -o -name 'docker-compose.yaml' \) | sort)"
+
+          if [ -z "$files" ]; then
+            echo "::error::未找到任何 docker-compose.yml 或 docker-compose.yaml"
             exit 1
           fi
 
-          if grep -R "/var/run/docker.sock" apps; then
-            echo "错误：不允许挂载 /var/run/docker.sock"
+          failed=0
+
+          for file in $files; do
+            echo "检查：$file"
+
+            if grep -nE '^[[:space:]]*privileged:[[:space:]]*true[[:space:]]*$' "$file"; then
+              echo "::error file=$file::禁止使用 privileged: true"
+              failed=1
+            fi
+
+            if grep -nE '^[[:space:]]*pid:[[:space:]]*host[[:space:]]*$' "$file"; then
+              echo "::error file=$file::禁止使用 pid: host"
+              failed=1
+            fi
+
+            if grep -nE '^[[:space:]]*ipc:[[:space:]]*host[[:space:]]*$' "$file"; then
+              echo "::error file=$file::禁止使用 ipc: host"
+              failed=1
+            fi
+
+            if grep -nE '/var/run/docker\.sock' "$file"; then
+              echo "::error file=$file::禁止挂载 /var/run/docker.sock"
+              failed=1
+            fi
+
+            if grep -nE '^[[:space:]]*network_mode:[[:space:]]*host[[:space:]]*$' "$file"; then
+              echo "::warning file=$file::检测到 network_mode: host，请确认确实需要 host 网络"
+            fi
+
+            if grep -nE '^[[:space:]]*-[[:space:]]*/(etc|root|proc|sys)(:|/|[[:space:]]|$)' "$file"; then
+              echo "::error file=$file::禁止直接挂载敏感系统目录 /etc /root /proc /sys"
+              failed=1
+            fi
+          done
+
+          if [ "$failed" -ne 0 ]; then
+            echo "检测到危险 docker-compose 配置，请根据上方 file 和 line 修改。"
             exit 1
           fi
 
-          if grep -R "pid:[[:space:]]*host" apps; then
-            echo "错误：不允许 pid: host"
-            exit 1
-          fi
-
-          if grep -R "ipc:[[:space:]]*host" apps; then
-            echo "错误：不允许 ipc: host"
-            exit 1
-          fi
-
-          if grep -R "network_mode:[[:space:]]*host" apps; then
-            echo "警告：检测到 network_mode: host，请谨慎使用"
-          fi
+          echo "危险配置检查通过"
 
       - name: Deny latest image tag
         run: |
           set -e
 
-          if grep -R "image:.*:latest" apps; then
-            echo "错误：不允许使用 latest 镜像标签，请使用固定版本号"
+          echo "检查是否使用 latest 镜像标签..."
+
+          files="$(find apps -type f \( -name 'docker-compose.yml' -o -name 'docker-compose.yaml' \) | sort)"
+
+          failed=0
+
+          for file in $files; do
+            echo "检查：$file"
+
+            if grep -nE '^[[:space:]]*image:[[:space:]]*["'\'']?[^[:space:]"'\'']+:latest["'\'']?[[:space:]]*($|#)' "$file"; then
+              echo "::error file=$file::禁止使用 latest 镜像标签，请使用固定版本号"
+              failed=1
+            fi
+          done
+
+          if [ "$failed" -ne 0 ]; then
+            echo "latest 镜像标签检查失败"
             exit 1
-          fi 
+          fi
+
+          echo "latest 镜像标签检查通过"
 
       - name: Run tools validation
         run: |
@@ -142,7 +213,7 @@ jobs:
           set -e
 
           if [ -z "$CNB_TOKEN" ]; then
-            echo "错误：未配置 GitHub Secret：CNB_TOKEN"
+            echo "::error::未配置 GitHub Secret：CNB_TOKEN"
             echo "请到 GitHub 仓库 Settings -> Secrets and variables -> Actions 添加 CNB_TOKEN"
             exit 1
           fi
@@ -160,3 +231,6 @@ jobs:
           git remote add cnb "https://cnb:${CNB_TOKEN}@cnb.cool/mengfox/1panel-appstore"
 
           git push cnb HEAD:main --force
+
+          # 如果当前 push 正好带 tag，可同步 tag。普通 main push 不影响。
+          git push cnb --tags --force || true
