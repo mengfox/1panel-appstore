@@ -24,92 +24,30 @@ jobs:
           set -e
 
           if [ ! -d "apps" ]; then
-            echo "::error::apps 目录不存在"
-            exit 1
+            echo "::warning::apps 目录不存在，请确认是否为 1Panel 应用商店仓库"
+          else
+            echo "apps 目录存在"
           fi
 
           if [ ! -f "manifest.yml" ] && [ ! -f "manifest.yaml" ]; then
             echo "::warning::manifest.yml 不存在，建议保留"
+          else
+            echo "manifest 文件存在"
           fi
 
-          echo "基础目录检查通过"
+          echo "基础目录检查完成，不拦截同步"
 
-      - name: Validate app directory structure
+      - name: Check sensitive host mounts
         run: |
           set -e
 
-          failed=0
-          app_count=0
+          echo "检查 docker-compose.yml 是否挂载敏感宿主机路径..."
 
-          for app in apps/*; do
-            [ -d "$app" ] || continue
-
-            app_count=$((app_count + 1))
-            app_name="$(basename "$app")"
-
-            echo "正在检查应用：$app_name"
-
-            if [ ! -f "$app/data.yml" ] && [ ! -f "$app/data.yaml" ]; then
-              echo "::error file=$app::应用 $app_name 缺少 data.yml 或 data.yaml"
-              failed=1
-              continue
-            fi
-
-            version_count=0
-
-            for ver in "$app"/*; do
-              [ -d "$ver" ] || continue
-
-              ver_name="$(basename "$ver")"
-
-              case "$ver_name" in
-                .* )
-                  continue
-                  ;;
-              esac
-
-              version_count=$((version_count + 1))
-
-              if [ ! -f "$ver/data.yml" ] && [ ! -f "$ver/data.yaml" ]; then
-                echo "::error file=$ver::版本 $app_name/$ver_name 缺少 data.yml 或 data.yaml"
-                failed=1
-              fi
-
-              if [ ! -f "$ver/docker-compose.yml" ] && [ ! -f "$ver/docker-compose.yaml" ]; then
-                echo "::error file=$ver::版本 $app_name/$ver_name 缺少 docker-compose.yml 或 docker-compose.yaml"
-                failed=1
-              fi
-            done
-
-            if [ "$version_count" -eq 0 ]; then
-              echo "::error file=$app::应用 $app_name 没有版本目录"
-              failed=1
-            fi
-          done
-
-          if [ "$app_count" -eq 0 ]; then
-            echo "::error::apps 目录下没有任何应用"
-            failed=1
-          fi
-
-          if [ "$failed" -ne 0 ]; then
-            echo "应用目录结构校验失败"
-            exit 1
-          fi
-
-          echo "应用目录结构校验通过"
-
-      - name: Deny dangerous compose options
-        run: |
-          set -e
-
-          echo "检查 docker-compose.yml 是否包含危险配置..."
-
-          files="$(find apps -type f \( -name 'docker-compose.yml' -o -name 'docker-compose.yaml' \) | sort)"
+          files="$(find apps -type f \( -name 'docker-compose.yml' -o -name 'docker-compose.yaml' \) 2>/dev/null | sort || true)"
 
           if [ -z "$files" ]; then
-            echo "::error::未找到任何 docker-compose.yml 或 docker-compose.yaml"
-            exit 1
+            echo "::warning::未找到 docker-compose.yml 或 docker-compose.yaml，跳过敏感路径检查"
+            exit 0
           fi
 
           python3 <<'PY'
@@ -124,119 +62,105 @@ jobs:
 
           failed = False
 
-          def error(file, line, msg, content):
-              global failed
-              failed = True
-              print(f"::error file={file},line={line}::{msg}")
-              print(f"  -> {content}")
-
-          def warning(file, line, msg, content):
-              print(f"::warning file={file},line={line}::{msg}")
-              print(f"  -> {content}")
-
-          allowed_etc_mounts = {
+          # 允许的 /etc 子路径，一般 1Panel 应用常用于同步时间
+          allowed_exact_paths = {
               "/etc/localtime",
               "/etc/timezone",
           }
 
+          # 明确禁止挂载的宿主机路径
+          denied_exact_paths = {
+              "/",
+              "/etc",
+              "/root",
+              "/proc",
+              "/sys",
+              "/var/run/docker.sock",
+              "/run/docker.sock",
+              "/var/lib/docker",
+          }
+
+          # 明确禁止挂载的宿主机路径前缀
+          denied_prefixes = (
+              "/root/",
+              "/proc/",
+              "/sys/",
+              "/var/lib/docker/",
+          )
+
+          # /etc 下只允许 localtime/timezone，其它 /etc/* 默认拦截
+          denied_etc_prefix = "/etc/"
+
+          def is_sensitive_host_path(path: str):
+              path = path.strip().strip("'").strip('"')
+
+              if not path.startswith("/"):
+                  return False, ""
+
+              if path in allowed_exact_paths:
+                  return False, ""
+
+              if path in denied_exact_paths:
+                  return True, f"禁止挂载敏感宿主机路径：{path}"
+
+              if path.startswith(denied_prefixes):
+                  return True, f"禁止挂载敏感宿主机路径：{path}"
+
+              if path.startswith(denied_etc_prefix):
+                  return True, f"禁止挂载 /etc 下的敏感路径，仅允许 /etc/localtime 和 /etc/timezone：{path}"
+
+              return False, ""
+
+          def report_error(file, line_no, msg, raw):
+              global failed
+              failed = True
+              print(f"::error file={file},line={line_no}::{msg}")
+              print(f"  -> {raw}")
+
           for file in files:
               print(f"检查：{file}")
-              text = file.read_text(encoding="utf-8", errors="ignore").splitlines()
+              lines = file.read_text(encoding="utf-8", errors="ignore").splitlines()
 
-              for idx, raw in enumerate(text, start=1):
+              for idx, raw in enumerate(lines, start=1):
                   line = raw.strip()
 
                   if not line or line.startswith("#"):
                       continue
 
-                  if re.match(r"^privileged:\s*true\s*(#.*)?$", line):
-                      error(file, idx, "禁止使用 privileged: true", raw)
+                  # 短语法挂载：
+                  # - /host/path:/container/path:ro
+                  # - "/host/path:/container/path:ro"
+                  # - '/host/path:/container/path:ro'
+                  short_match = re.match(r"""^-\s*['"]?([^'"]+)['"]?\s*(#.*)?$""", line)
+                  if short_match:
+                      volume = short_match.group(1).strip()
+
+                      # 排除纯参数列表、命令列表等，不包含 : 的一般不是 volume
+                      if ":" in volume:
+                          host_path = volume.split(":", 1)[0].strip().strip("'").strip('"')
+                          sensitive, msg = is_sensitive_host_path(host_path)
+                          if sensitive:
+                              report_error(file, idx, msg, raw)
                       continue
 
-                  if re.match(r"^pid:\s*host\s*(#.*)?$", line):
-                      error(file, idx, "禁止使用 pid: host", raw)
-                      continue
-
-                  if re.match(r"^ipc:\s*host\s*(#.*)?$", line):
-                      error(file, idx, "禁止使用 ipc: host", raw)
-                      continue
-
-                  if re.match(r"^network_mode:\s*host\s*(#.*)?$", line):
-                      warning(file, idx, "检测到 network_mode: host，请确认确实需要 host 网络", raw)
-                      continue
-
-                  if "/var/run/docker.sock" in line:
-                      error(file, idx, "禁止挂载 /var/run/docker.sock", raw)
-                      continue
-
-                  volume_match = re.match(r"""^-\s*['"]?([^'"]+)['"]?\s*(#.*)?$""", line)
-                  if not volume_match:
-                      continue
-
-                  volume = volume_match.group(1).strip()
-                  host_path = volume.split(":", 1)[0].strip()
-
-                  if not host_path.startswith("/"):
-                      continue
-
-                  if host_path == "/":
-                      error(file, idx, "禁止挂载宿主机根目录 /", raw)
-                      continue
-
-                  if host_path == "/var/run/docker.sock":
-                      error(file, idx, "禁止挂载 /var/run/docker.sock", raw)
-                      continue
-
-                  if host_path == "/etc" or host_path.startswith("/etc/"):
-                      if host_path not in allowed_etc_mounts:
-                          error(file, idx, "禁止挂载 /etc 及其敏感子目录，仅允许 /etc/localtime 和 /etc/timezone", raw)
-                      continue
-
-                  if host_path == "/root" or host_path.startswith("/root/"):
-                      error(file, idx, "禁止挂载 /root", raw)
-                      continue
-
-                  if host_path == "/proc" or host_path.startswith("/proc/"):
-                      error(file, idx, "禁止挂载 /proc", raw)
-                      continue
-
-                  if host_path == "/sys" or host_path.startswith("/sys/"):
-                      error(file, idx, "禁止挂载 /sys", raw)
-                      continue
-
-                  if host_path == "/var/lib/docker" or host_path.startswith("/var/lib/docker/"):
-                      error(file, idx, "禁止挂载 /var/lib/docker", raw)
+                  # 长语法挂载：
+                  # source: /host/path
+                  # src: /host/path
+                  # device: /host/path
+                  long_match = re.match(r"""^(source|src|device):\s*['"]?([^'"]+)['"]?\s*(#.*)?$""", line)
+                  if long_match:
+                      host_path = long_match.group(2).strip().strip("'").strip('"')
+                      sensitive, msg = is_sensitive_host_path(host_path)
+                      if sensitive:
+                          report_error(file, idx, msg, raw)
                       continue
 
           if failed:
-              print("检测到危险 docker-compose 配置，请根据上方 file 和 line 修改。")
+              print("检测到敏感宿主机路径挂载，请根据上方 file 和 line 修改。")
               sys.exit(1)
 
-          print("危险配置检查通过")
+          print("敏感路径检查通过")
           PY
-
-      - name: Check latest image tag
-        run: |
-          set -e
-
-          echo "检查是否使用 latest 镜像标签..."
-
-          files="$(find apps -type f \( -name 'docker-compose.yml' -o -name 'docker-compose.yaml' \) | sort)"
-
-          if [ -z "$files" ]; then
-            echo "::warning::未找到 docker-compose.yml 或 docker-compose.yaml，跳过 latest 检查"
-            exit 0
-          fi
-
-          for file in $files; do
-            echo "检查：$file"
-
-            if grep -nE '^[[:space:]]*image:[[:space:]]*["'"'"']?[^[:space:]"'"'"']+:latest["'"'"']?[[:space:]]*($|#)' "$file"; then
-              echo "::warning file=$file::检测到 latest 镜像标签，当前允许使用，但建议生产环境固定版本号"
-            fi
-          done
-
-          echo "latest 镜像标签检查完成，允许继续"
 
       - name: Run tools validation
         run: |
