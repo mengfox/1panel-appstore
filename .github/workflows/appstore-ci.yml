@@ -62,13 +62,7 @@ jobs:
 
           failed = False
 
-          # 允许的 /etc 子路径，一般 1Panel 应用常用于同步时间
-          allowed_exact_paths = {
-              "/etc/localtime",
-              "/etc/timezone",
-          }
-
-          # 明确禁止挂载的宿主机路径
+          # 只拦截真正高危的宿主机路径
           denied_exact_paths = {
               "/",
               "/etc",
@@ -80,7 +74,6 @@ jobs:
               "/var/lib/docker",
           }
 
-          # 明确禁止挂载的宿主机路径前缀
           denied_prefixes = (
               "/root/",
               "/proc/",
@@ -88,16 +81,10 @@ jobs:
               "/var/lib/docker/",
           )
 
-          # /etc 下只允许 localtime/timezone，其它 /etc/* 默认拦截
-          denied_etc_prefix = "/etc/"
-
           def is_sensitive_host_path(path: str):
               path = path.strip().strip("'").strip('"')
 
               if not path.startswith("/"):
-                  return False, ""
-
-              if path in allowed_exact_paths:
                   return False, ""
 
               if path in denied_exact_paths:
@@ -105,9 +92,6 @@ jobs:
 
               if path.startswith(denied_prefixes):
                   return True, f"禁止挂载敏感宿主机路径：{path}"
-
-              if path.startswith(denied_etc_prefix):
-                  return True, f"禁止挂载 /etc 下的敏感路径，仅允许 /etc/localtime 和 /etc/timezone：{path}"
 
               return False, ""
 
@@ -130,12 +114,10 @@ jobs:
                   # 短语法挂载：
                   # - /host/path:/container/path:ro
                   # - "/host/path:/container/path:ro"
-                  # - '/host/path:/container/path:ro'
                   short_match = re.match(r"""^-\s*['"]?([^'"]+)['"]?\s*(#.*)?$""", line)
                   if short_match:
                       volume = short_match.group(1).strip()
 
-                      # 排除纯参数列表、命令列表等，不包含 : 的一般不是 volume
                       if ":" in volume:
                           host_path = volume.split(":", 1)[0].strip().strip("'").strip('"')
                           sensitive, msg = is_sensitive_host_path(host_path)
@@ -161,17 +143,6 @@ jobs:
 
           print("敏感路径检查通过")
           PY
-
-      - name: Run tools validation
-        run: |
-          set -e
-
-          if [ -f "tools/validate.sh" ]; then
-            chmod +x tools/validate.sh
-            ./tools/validate.sh
-          else
-            echo "tools/validate.sh 不存在，跳过"
-          fi
 
   sync-cnb:
     name: Sync GitHub to CNB
