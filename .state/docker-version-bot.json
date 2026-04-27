@@ -8,13 +8,13 @@
     "digest": "sha256:815c780af440c84b29074fc33ffea2ba419bc1619715bb6519a406c0137d8336",
     "commit": "",
     "updated_at": "2026-04-26T19:06:11Z",
-    "checked_at": "2026-04-27T04:17:03Z",
+    "checked_at": "2026-04-27T07:17:44Z",
     "version": "2.17",
     "digest12": "815c780af440",
     "commit8": ""
   },
   "next-terminal": {
-    "checked_at": "2026-04-27T04:17:03Z",
+    "checked_at": "2026-04-27T07:17:45Z",
     "version": "3.1.1",
     "tag": "v3.1.1",
     "github_tag": "v3.1.1",
@@ -28,6 +28,16 @@
     "version": "2.9.3",
     "tag": "2.9.3",
     "github_tag": "2.9.3",
+    "digest": "",
+    "digest12": "",
+    "commit": "",
+    "commit8": ""
+  },
+  "zdir": {
+    "checked_at": "2026-04-27T07:17:45Z",
+    "version": "4.6.2",
+    "tag": "4.6.2",
+    "github_tag": "4.6.2",
     "digest": "",
     "digest12": "",
     "commit": "",
