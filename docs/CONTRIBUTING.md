@@ -33,7 +33,7 @@ networks:
 
 services:
   app:
-    image: your/image:1.0.0
+    image: your/image:0.68.3
     container_name: ${CONTAINER_NAME}
     restart: always
     labels:

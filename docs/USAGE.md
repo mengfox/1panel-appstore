@@ -85,8 +85,8 @@ ls -lah /opt/1panel/resource/apps/local
 
 ```bash
 apps/my-app/data.yml
-apps/my-app/1.0.0/data.yml
-apps/my-app/1.0.0/docker-compose.yml
+apps/my-app/0.68.3/data.yml
+apps/my-app/0.68.3/docker-compose.yml
 ```
 
 校验：
