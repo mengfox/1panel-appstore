@@ -42,7 +42,7 @@ additionalProperties:
       required: true
       rule: paramCommon
       type: text
-    - default: ""
+    - default: dnsmgr
       envKey: PANEL_DB_USER_PASSWORD
       labelEn: Database Password
       labelZh: 数据库密码
