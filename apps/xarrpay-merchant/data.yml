@@ -1,21 +1,22 @@
+name: XArr支付系统
+tags:
+  - WebSite
+  - Tool
+title: XArr支付系统
+description: XArr支付系统是专业的在线支付解决方案，支持微信、支付宝、QQ、银联等多种支付方式，提供官方直连、独立部署、国密加密、合规清算等核心优势，实现聚合支付、多渠道收款、实时到账。
 additionalProperties:
   key: xarrpay-merchant
-  name: XArrPay Merchant
+  name: XArr支付系统
   tags:
-    - WebSite
-    - Payment
-    - Merchant
-  shortDescZh: XArrPay Merchant 商户端
-  shortDescEn: XArrPay Merchant payment gateway
-  description:
-    zh: XArrPay Merchant 商户端，支持通过 1Panel 标准数据库字段关联数据库服务，并在容器启动时自动初始化挂载目录和配置文件。
-    en: XArrPay Merchant with 1Panel database integration and startup initialization.
+    - Website
+  shortDescZh: XArr支付系统是专业的在线支付解决方案，支持微信、支付宝、QQ、银联等多种支付方式，提供官方直连、独立部署、国密加密、合规清算等核心优势，实现聚合支付、多渠道收款、实时到账。
   type: website
   crossVersionUpdate: true
   limit: 0
-  website: https://1panel.cn/
-  github: https://github.com/1Panel-dev/appstore
-  document: https://1panel.cn/
+  recommend: 10
+  website: https://www.xarrpay.cn
+  github: https://www.mengfox.com/shop/102.html
+  document: https://www.mengfox.com/shop/102.html
   architectures:
     - amd64
     - arm64
