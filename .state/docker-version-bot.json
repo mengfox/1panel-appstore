@@ -8,13 +8,13 @@
     "digest": "sha256:3a2eec22c98a4aeca12a870e529a4e98b18906f76b2b8b0f8536bdcc899a9a98",
     "commit": "",
     "updated_at": "2026-04-26T19:06:11Z",
-    "checked_at": "2026-05-03T18:39:33Z",
+    "checked_at": "2026-05-03T20:29:50Z",
     "version": "2.18",
     "digest12": "3a2eec22c98a",
     "commit8": ""
   },
   "next-terminal": {
-    "checked_at": "2026-05-03T18:39:34Z",
+    "checked_at": "2026-05-03T20:29:51Z",
     "version": "3.2.1",
     "tag": "v3.2.1",
     "github_tag": "v3.2.1",
@@ -24,7 +24,7 @@
     "commit8": ""
   },
   "mtab": {
-    "checked_at": "2026-05-03T18:39:41Z",
+    "checked_at": "2026-05-03T20:29:53Z",
     "version": "2.9.7",
     "tag": "2.9.7",
     "github_tag": "2.9.7",
@@ -34,7 +34,7 @@
     "commit8": ""
   },
   "zdir": {
-    "checked_at": "2026-05-03T18:39:36Z",
+    "checked_at": "2026-05-03T20:29:51Z",
     "version": "4.6.2",
     "tag": "4.6.2",
     "github_tag": "4.6.2",
@@ -44,7 +44,7 @@
     "commit8": ""
   },
   "xarrpay-merchant": {
-    "checked_at": "2026-05-03T18:39:36Z",
+    "checked_at": "2026-05-03T20:29:51Z",
     "version": "1.5.0.3",
     "tag": "1.5.0.3",
     "github_tag": "1.5.0.3",
@@ -54,7 +54,7 @@
     "commit8": ""
   },
   "netbird-client": {
-    "checked_at": "2026-05-03T18:39:39Z",
+    "checked_at": "2026-05-03T20:29:52Z",
     "version": "0.70.4",
     "tag": "0.70.4",
     "github_tag": "0.70.4",
@@ -65,7 +65,7 @@
   },
   "lsky-pro-v2": {},
   "zjmf-finance": {
-    "checked_at": "2026-05-03T18:39:42Z",
+    "checked_at": "2026-05-03T20:29:53Z",
     "version": "3.7.0",
     "tag": "3.7.0",
     "github_tag": "3.7.0",
@@ -75,7 +75,7 @@
     "commit8": ""
   },
   "zjmf": {
-    "checked_at": "2026-05-03T18:39:43Z",
+    "checked_at": "2026-05-03T20:29:53Z",
     "version": "10.4.6",
     "tag": "10.4.6",
     "github_tag": "10.4.6",
