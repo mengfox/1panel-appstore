@@ -1,6 +1,6 @@
 services:
   netbird-client:
-    image: netbirdio/netbird:0.70.4
+    image: netbirdio/netbird:0.71.1
     container_name: ${CONTAINER_NAME}
     hostname: ${NB_CLIENT_NAME}
     restart: unless-stopped
