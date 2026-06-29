@@ -9,7 +9,7 @@ services:
       - ./data:/usr/local/next-terminal/data
 
   next-terminal:
-    image: dushixiang/next-terminal:v3.3.6
+    image: dushixiang/next-terminal:v3.4.2
     container_name: ${CONTAINER_NAME}
     restart: always
     networks: [ 1panel-network ]
