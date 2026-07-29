@@ -3,28 +3,28 @@
     "mode": "github_release",
     "image": "netcccyun/dnsmgr",
     "version_dir": "2.15",
-    "tag": "2.18",
-    "github_tag": "2.18",
-    "digest": "sha256:3a2eec22c98a4aeca12a870e529a4e98b18906f76b2b8b0f8536bdcc899a9a98",
+    "tag": "2.19",
+    "github_tag": "2.19",
+    "digest": "sha256:f795bbc6716bd28d2c8bc476d59fda74d8ba80f8d8eb42d2857f0573fcca3df8",
     "commit": "",
     "updated_at": "2026-04-26T19:06:11Z",
-    "checked_at": "2026-07-02T19:04:14Z",
-    "version": "2.18",
-    "digest12": "3a2eec22c98a",
+    "checked_at": "2026-07-29T06:41:08Z",
+    "version": "2.19",
+    "digest12": "f795bbc6716b",
     "commit8": ""
   },
   "next-terminal": {
-    "checked_at": "2026-07-02T19:04:15Z",
-    "version": "3.4.2",
-    "tag": "v3.4.2",
-    "github_tag": "v3.4.2",
+    "checked_at": "2026-07-29T06:41:08Z",
+    "version": "3.6.2",
+    "tag": "v3.6.2",
+    "github_tag": "v3.6.2",
     "digest": "",
     "digest12": "",
     "commit": "",
     "commit8": ""
   },
   "mtab": {
-    "checked_at": "2026-07-02T19:04:18Z",
+    "checked_at": "2026-07-29T06:41:11Z",
     "version": "2.9.7",
     "tag": "2.9.7",
     "github_tag": "2.9.7",
@@ -34,7 +34,7 @@
     "commit8": ""
   },
   "zdir": {
-    "checked_at": "2026-07-02T19:04:15Z",
+    "checked_at": "2026-07-29T06:41:08Z",
     "version": "4.6.2",
     "tag": "4.6.2",
     "github_tag": "4.6.2",
@@ -44,7 +44,7 @@
     "commit8": ""
   },
   "xarrpay-merchant": {
-    "checked_at": "2026-07-02T19:04:15Z",
+    "checked_at": "2026-07-29T06:41:09Z",
     "version": "1.5.0.3",
     "tag": "1.5.0.3",
     "github_tag": "1.5.0.3",
@@ -54,10 +54,10 @@
     "commit8": ""
   },
   "netbird-client": {
-    "checked_at": "2026-07-02T19:04:17Z",
-    "version": "0.74.1",
-    "tag": "0.74.1",
-    "github_tag": "0.74.1",
+    "checked_at": "2026-07-29T06:41:11Z",
+    "version": "0.75.1",
+    "tag": "0.75.1",
+    "github_tag": "0.75.1",
     "digest": "",
     "digest12": "",
     "commit": "",
@@ -65,7 +65,7 @@
   },
   "lsky-pro-v2": {},
   "zjmf-finance": {
-    "checked_at": "2026-07-02T19:04:19Z",
+    "checked_at": "2026-07-29T06:41:11Z",
     "version": "3.7.0",
     "tag": "3.7.0",
     "github_tag": "3.7.0",
@@ -75,7 +75,7 @@
     "commit8": ""
   },
   "zjmf": {
-    "checked_at": "2026-07-02T19:04:19Z",
+    "checked_at": "2026-07-29T06:41:12Z",
     "version": "10.4.6",
     "tag": "10.4.6",
     "github_tag": "10.4.6",
