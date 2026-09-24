@@ -4,7 +4,7 @@ networks:
 
 services:
   rainbow-dnsmgr:
-    image: netcccyun/dnsmgr@sha256:815c780af440c84b29074fc33ffea2ba419bc1619715bb6519a406c0137d8336
+    image: netcccyun/dnsmgr@sha256:7c17f4e2e20e6a834edffa3452323a61fcf2fc12205076fafd09c41acf3b7be5
     container_name: ${CONTAINER_NAME}
     restart: always
     stdin_open: true
